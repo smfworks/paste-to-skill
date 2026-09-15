@@ -1,0 +1,25 @@
+{
+  "name": "triage-inbox",
+  "description": "Use this when unread mail from overnight needs sorting into act, hold, or archive.",
+  "title": "Triage inbox",
+  "goal": "Inbox to zero with holds parked for a human.",
+  "whenToUse": ["Unread mail piled up overnight"],
+  "steps": [
+    "Scan subject and sender",
+    "Draft replies — do not send",
+    "Hold anything that needs a human",
+    "Archive newsletters and noise"
+  ],
+  "inputs": ["Open inbox", "Last 24h window"],
+  "tools": [
+    { "name": "email", "purpose": "read and draft mail" },
+    { "name": "calendar", "purpose": "read holds and events" }
+  ],
+  "refuse": [
+    "Do not auto-reply to lawyers or strangers asking for money",
+    "Do not send mail without a human read"
+  ],
+  "success": ["Unread is zero", "Review holds the exceptions"],
+  "tags": ["workflow", "email"],
+  "requires": { "bins": [], "env": [] }
+}
