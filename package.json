@@ -1,0 +1,39 @@
+{
+  "name": "paste-to-skill",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Paste messy notes and get a clean Hermes/OpenClaw SKILL.md.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smfworks/paste-to-skill.git"
+  },
+  "homepage": "https://smfworks.com",
+  "bugs": {
+    "url": "https://github.com/smfworks/paste-to-skill/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --test src/lib/convert.test.ts"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

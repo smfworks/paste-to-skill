@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smfworks.com/schema/agent-skill.schema.json",
+  "title": "AgentSkill",
+  "description": "Intermediate skill draft that Paste → Skill and other tools can emit. Render to Hermes or OpenClaw SKILL.md. Required description style: start with “Use this when …”.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Kebab-case skill id. Must match the skill directory name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "What the skill does and when to use it. Required style: “Use this when …”.",
+      "pattern": "^Use this when .+"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human title used as the H1 in SKILL.md."
+    },
+    "goal": {
+      "type": "string",
+      "description": "One or two sentences: what done looks like."
+    },
+    "whenToUse": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Trigger conditions for loading this skill."
+    },
+    "steps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Numbered procedure the agent follows."
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "purpose": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "refuse": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Never-do list. Always include secrets hygiene and human review for consequential acts."
+    },
+    "success": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Verification / success criteria."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Hermes metadata.hermes.tags"
+    },
+    "requires": {
+      "type": "object",
+      "properties": {
+        "bins": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OpenClaw metadata.openclaw.requires.bins"
+        },
+        "env": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OpenClaw metadata.openclaw.requires.env — names only, never values."
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "description": "Optional original paste. Ignored by the renderer."
+    }
+  }
+}
