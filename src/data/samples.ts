@@ -22,7 +22,7 @@ export const SAMPLES: SampleSop[] = [
 
 Subject: morning mail is a mess again
 
-When the inbox has unread from overnight, sort it. Do not pretend this is a lawyer or a doctor.
+When the inbox has unread from overnight, sort it.
 
 From: ops
 To: agent
@@ -101,7 +101,7 @@ Done when: draft is in the doc, blockers named, and a human can send in one pass
     id: "refund",
     label: "Customer refund",
     blurb: "Return scan, then money — with a hold",
-    paste: `Customer refund path
+    paste: `# Customer refund path
 
 From: support@shop
 Subject: Re: refund for order 1842

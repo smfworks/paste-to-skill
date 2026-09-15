@@ -1,7 +1,7 @@
-# Screenshot placeholders
+# Screenshots
 
-Replace these with captures from `npm run dev` before a tagged release:
+Captured from `npm run dev` (inbox sample, Hermes flavor):
 
-- `app-desktop.png` — split layout, inbox sample, Hermes preview
-- `skill-preview.png` — cropped SKILL.md syntax view
-- `app-mobile.png` — stacked paste + preview at ~390px
+- `app-desktop.png` — split compositor
+- `skill-preview.png` — syntax-highlighted `SKILL.md`
+- `app-mobile.png` — stacked layout at ~390px

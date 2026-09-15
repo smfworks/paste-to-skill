@@ -2,7 +2,7 @@
 
 Subject: morning mail is a mess again
 
-When the inbox has unread from overnight, sort it. Do not pretend this is a lawyer or a doctor.
+When the inbox has unread from overnight, sort it.
 
 From: ops
 To: agent

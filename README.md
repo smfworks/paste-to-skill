@@ -12,13 +12,11 @@ Sister app: **[Agent Receipt](https://github.com/smfworks/agent-receipt)** ([dem
 
 ## Screenshots
 
-Desktop split (paste left, `SKILL.md` right) and the generated skill file.
+Desktop split (paste left, live `SKILL.md` right). Mobile stacks the paste panel above the preview.
 
 ![Paste → Skill desktop](docs/app-desktop.png)
 
 ![Generated SKILL.md preview](docs/skill-preview.png)
-
-Mobile stacks the paste panel above the preview.
 
 ![Paste → Skill mobile](docs/app-mobile.png)
 

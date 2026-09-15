@@ -25,8 +25,20 @@ describe("ensureUseWhen", () => {
 });
 
 describe("convertPaste", () => {
-  it("returns null for empty paste", () => {
-    assert.equal(convertPaste("   "), null);
+  it("prefers an H1 title over an email subject", () => {
+    const draft = convertPaste(`# Triage inbox
+
+Subject: morning mail is a mess again
+
+When unread mail piles up overnight, sort it.
+
+1. Scan
+2. Draft
+3. Hold
+`);
+    assert.equal(draft?.name, "triage-inbox");
+    assert.match(draft?.description ?? "", /^Use this when the inbox has unread|^Use this when unread mail/i);
+    assert.equal(/\bwhen when\b/i.test(draft?.description ?? ""), false);
   });
 
   it("pulls numbered steps, refuses, and tools from freeform notes", () => {

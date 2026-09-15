@@ -6,25 +6,7 @@ const MAX_DESCRIPTION = 1024;
 const MAX_STEPS = 20;
 const MAX_LIST = 12;
 
-const STOP = new Set([
-  "a",
-  "an",
-  "the",
-  "to",
-  "for",
-  "of",
-  "and",
-  "or",
-  "in",
-  "on",
-  "with",
-  "your",
-  "our",
-  "is",
-  "it",
-  "re",
-  "from",
-]);
+const STOP = new Set(["a", "an", "the", "and", "or", "of"]);
 
 const DEFAULT_REFUSE = [
   "Do not send external messages, money, or public posts without a human review.",
@@ -149,12 +131,18 @@ export function slugify(input: string): string {
 }
 
 export function ensureUseWhen(text: string): string {
-  const stripped = text
+  let body = text
     .trim()
     .replace(/^use this skill when\s+/i, "")
     .replace(/^use this when\s+/i, "")
-    .replace(/^use when\s+/i, "");
-  const body = stripped || "the operator pastes a playbook the agent should follow.";
+    .replace(/^use when\s+/i, "")
+    .replace(/^whenever\s+/i, "")
+    .replace(/^when\s+/i, "");
+  body = firstSentence(body);
+  if (!body) body = "the operator pastes a playbook the agent should follow";
+  if (IMPERATIVE.test(body) || /^(ship|sort|turn|follow|draft|triage|ack)\b/i.test(body)) {
+    body = `you need to ${body.charAt(0).toLowerCase()}${body.slice(1)}`;
+  }
   const sentence = body.charAt(0).toLowerCase() + body.slice(1);
   let description = `Use this when ${sentence}`.replace(/\s+/g, " ").trim();
   if (!/[.!?]$/.test(description)) description += ".";
@@ -176,7 +164,7 @@ function unique(items: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const item of items) {
-    const trimmed = cleanItem(item);
+    const trimmed = cleanItem(item).replace(/[.]+$/, "");
     if (!trimmed) continue;
     const key = trimmed.toLowerCase();
     if (seen.has(key)) continue;
@@ -197,6 +185,22 @@ function cleanItem(value: string): string {
     .trim();
 }
 
+function firstSentence(text: string): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "";
+  const match = cleaned.match(/^(.{20,220}?)(?:[.!?](?:\s|$)|$)/);
+  return (match?.[1] ?? cleaned.slice(0, 220)).replace(/[.!?]$/, "").trim();
+}
+
+function isHeadingShape(line: string): boolean {
+  if (/^#{1,6}\s+\S/.test(line)) return true;
+  const stripped = line.replace(/[:\-–]\s*$/, "").trim();
+  if (stripped.length > 42) return false;
+  if (stripped.split(/\s+/).length > 6) return false;
+  if (/^\d+[.)]/.test(stripped) || /^\[[ xX]\]/.test(stripped)) return false;
+  return true;
+}
+
 function looksLikeHeader(line: string): boolean {
   return (
     /^#{1,6}\s+\S/.test(line) ||
@@ -206,6 +210,7 @@ function looksLikeHeader(line: string): boolean {
 }
 
 function sectionKey(line: string): keyof ParsedBuckets | null {
+  if (!isHeadingShape(line)) return null;
   const stripped = line
     .replace(/^#{1,6}\s+/, "")
     .replace(/[:\-–]\s*$/, "")
@@ -213,13 +218,42 @@ function sectionKey(line: string): keyof ParsedBuckets | null {
     .toLowerCase();
   if (!stripped) return null;
   if (stripped in SECTION_ALIASES) return SECTION_ALIASES[stripped];
-  if (/^(steps?|checklist|procedure)\b/.test(stripped)) return "steps";
-  if (/^(never|refuse|pitfalls|don'?t)\b/.test(stripped)) return "refuse";
+  if (/^(steps?|checklist|procedure|playbook)\b/.test(stripped)) return "steps";
+  if (/^(never|refuse|pitfalls|don'?t)\b/.test(stripped) && stripped.split(/\s+/).length <= 4) return "refuse";
   if (/^(inputs?|needs?)\b/.test(stripped)) return "inputs";
   if (/^tools?\b/.test(stripped)) return "tools";
   if (/^(success|verification|done when)\b/.test(stripped)) return "success";
-  if (/^(when to use|use when)\b/.test(stripped)) return "when";
+  if (/^(when to use|use when|when)$/.test(stripped)) return "when";
   return null;
+}
+
+function extractTitle(text: string): string {
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/^>\s?/, "").trim())
+    .filter(Boolean);
+  const h1 = lines.find((line) => /^#{1,6}\s+\S/.test(line) && !sectionKey(line));
+  if (h1) return h1.replace(/^#{1,6}\s+/, "").trim();
+  const labeled = lines.find((line) => /^(name|title|sop)\s*[:\-–]\s+\S/i.test(line));
+  if (labeled) return labeled.replace(/^(name|title|sop)\s*[:\-–]\s+/i, "").trim();
+  const first = lines.find(
+    (line) =>
+      !looksLikeHeader(line) &&
+      !sectionKey(line) &&
+      !LABELED.test(line) &&
+      line.length >= 3 &&
+      line.length <= 72,
+  );
+  if (first) return cleanItem(first);
+  const subject = lines.find((line) => /^subject\s*:/i.test(line));
+  if (subject) {
+    return subject
+      .replace(/^subject\s*:/i, "")
+      .replace(/^(re:\s*)+/i, "")
+      .trim();
+  }
+  return "Untitled skill";
 }
 
 function extractListItems(block: string): string[] {
@@ -244,19 +278,32 @@ function extractImperatives(block: string): string[] {
   return unique(items);
 }
 
-function firstParagraph(text: string): string {
-  const parts = text
-    .split(/\n{2,}/)
-    .map((part) =>
-      part
-        .split("\n")
-        .map((line) => line.replace(/^>\s?/, "").trim())
-        .filter((line) => line && !looksLikeHeader(line) && !sectionKey(line) && !LABELED.test(line))
-        .join(" "),
-    )
-    .map((part) => part.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  return parts[0] ?? "";
+function proseLead(block: string, title = ""): string {
+  const titleKey = title.toLowerCase();
+  const lines: string[] = [];
+  for (const raw of block.split("\n")) {
+    const line = raw.replace(/^>\s?/, "").trim();
+    if (!line) {
+      if (lines.length) break;
+      continue;
+    }
+    if (looksLikeHeader(line) || sectionKey(line) || LABELED.test(line)) continue;
+    if (/^[-*•–—]\s+\S/.test(line) || /^\[[ xX]\]/.test(line) || /^\d+[.)]\s+\S/.test(line)) break;
+    const cleaned = cleanItem(line);
+    if (!cleaned) continue;
+    if (titleKey && cleaned.toLowerCase() === titleKey) continue;
+    if (titleKey && cleaned.toLowerCase().startsWith(titleKey + " —")) continue;
+    lines.push(cleaned);
+    if (lines.join(" ").length > 140) break;
+  }
+  return firstSentence(lines.join(" "));
+}
+
+function looksLikeAnecdote(text: string): boolean {
+  return (
+    /\b(can we|could we|please refund|jane|hey there)\b/i.test(text) ||
+    (text.includes("?") && text.length < 90)
+  );
 }
 
 function parseLabeledLine(line: string, buckets: ParsedBuckets): boolean {
@@ -271,7 +318,7 @@ function parseLabeledLine(line: string, buckets: ParsedBuckets): boolean {
     case "title":
     case "subject":
     case "sop":
-      buckets.title = value.replace(/^(re:\s*)+/i, "").trim() || buckets.title;
+      buckets.title = buckets.title || value.replace(/^(re:\s*)+/i, "").trim();
       break;
     case "description":
       buckets.description = value;
@@ -330,28 +377,23 @@ function parseLabeledLine(line: string, buckets: ParsedBuckets): boolean {
 
 function parseFreeform(text: string): ParsedBuckets {
   const buckets = emptyBuckets();
+  buckets.title = extractTitle(text);
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   let current: keyof ParsedBuckets | null = null;
   const buffer: string[] = [];
 
   const absorbBlock = (block: string, target: keyof ParsedBuckets | null) => {
     const items = extractListItems(block);
-    const prose = block
-      .split("\n")
-      .map((line) => cleanItem(line))
-      .filter((line) => line && !looksLikeHeader(line))
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
+    const lead = proseLead(block, buckets.title);
     if (!target) {
-      if (!buckets.goal && prose) buckets.goal = firstParagraph(block) || prose;
+      if (!buckets.goal && lead) buckets.goal = lead;
       if (items.length) buckets.steps.push(...items);
       return;
     }
-    if (target === "goal" && prose) buckets.goal = buckets.goal || prose;
-    else if (target === "title" && prose) buckets.title = buckets.title || prose;
+    if (target === "goal" && lead) buckets.goal = buckets.goal || lead;
+    else if (target === "title" && lead) buckets.title = buckets.title || lead;
     else if (Array.isArray(buckets[target])) {
-      const extra = items.length ? items : prose ? [prose] : [];
+      const extra = items.length ? items : lead ? [lead] : [];
       (buckets[target] as string[]).push(...extra);
     }
   };
@@ -365,16 +407,14 @@ function parseFreeform(text: string): ParsedBuckets {
   for (const raw of lines) {
     const line = raw.replace(/^>\s?/, "").trim();
     if (!line) {
-      if (current) buffer.push("");
+      buffer.push("");
       continue;
     }
     const heading = line.match(/^#{1,6}\s+(.+)/);
-    if (heading && !buckets.title && !sectionKey(line)) {
-      buckets.title = heading[1].trim();
+    if (heading && !sectionKey(line)) {
       continue;
     }
-    if (/^subject\s*:/i.test(line) && !buckets.title) {
-      buckets.title = line.replace(/^subject\s*:/i, "").replace(/^(re:\s*)+/i, "").trim();
+    if (/^subject\s*:/i.test(line)) {
       continue;
     }
     if (/^(from|to|cc|bcc|date|sent)\s*:/i.test(line) || /^on .+ wrote:\s*$/i.test(line)) {
@@ -422,11 +462,7 @@ function parseFreeform(text: string): ParsedBuckets {
   }
 
   if (!buckets.title) {
-    const first = lines.find((line) => {
-      const trimmed = line.trim();
-      return trimmed && !looksLikeHeader(trimmed) && !sectionKey(trimmed) && !LABELED.test(trimmed) && trimmed.length < 80;
-    });
-    buckets.title = first ? cleanItem(first) : "Untitled skill";
+    buckets.title = extractTitle(text);
   }
 
   return buckets;
@@ -570,10 +606,10 @@ function inferSuccess(existing: string[], steps: string[]): string[] {
   return fallback;
 }
 
-function inferWhen(description: string, goal: string, existing: string[]): string[] {
+function inferWhen(description: string, existing: string[]): string[] {
   if (existing.length) return unique(existing).slice(0, MAX_LIST);
   const seed = description.replace(/^Use this when\s+/i, "").replace(/[.]$/, "");
-  return unique([seed, goal].filter(Boolean)).slice(0, 4);
+  return seed ? [seed] : [];
 }
 
 function titleCase(value: string): string {
@@ -611,13 +647,17 @@ export function normalizeDraft(partial: Partial<SkillDraft> & { name?: string })
   };
 }
 
+function playbookGoal(title: string): string {
+  return `Follow the ${title.toLowerCase()} playbook, then stop for a human.`;
+}
+
 function bucketsToDraft(buckets: ParsedBuckets, source: string): SkillDraft {
   const inferred = inferTools(source, buckets.tools);
   const title = buckets.title || "Untitled skill";
-  const goal =
-    buckets.goal ||
-    firstParagraph(source) ||
-    "Turn the pasted playbook into a procedure the agent can follow, then stop for a human.";
+  let goal = (buckets.goal && firstSentence(buckets.goal)) || "";
+  if (!goal || looksLikeAnecdote(goal) || slugify(goal) === slugify(title)) {
+    goal = playbookGoal(title);
+  }
   const description = ensureUseWhen(buckets.description || buckets.when[0] || goal);
   const steps = unique(buckets.steps).slice(0, MAX_STEPS);
   const filledSteps =
@@ -634,7 +674,7 @@ function bucketsToDraft(buckets: ParsedBuckets, source: string): SkillDraft {
     description,
     title,
     goal,
-    whenToUse: inferWhen(description, goal, buckets.when),
+    whenToUse: inferWhen(description, buckets.when),
     steps: filledSteps,
     inputs: inferInputs(source, buckets.inputs),
     tools: inferred.tools,
