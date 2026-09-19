@@ -554,3 +554,9 @@ input:focus {
     max-height: 70vh;
   }
 }
+
+
+.handoff-error {
+  color: var(--ember-soft);
+  font-size: 12px;
+}
