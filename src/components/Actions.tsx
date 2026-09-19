@@ -1,8 +1,9 @@
 interface ActionsProps {
   disabled: boolean;
-  busy: "copy" | "download" | "share" | null;
+  busy: "copy" | "download" | "share" | "png" | null;
   onCopy: () => void;
   onDownload: () => void;
+  onPng: () => void;
   onShare: () => void;
   onReset: () => void;
 }
@@ -12,6 +13,7 @@ export function Actions({
   busy,
   onCopy,
   onDownload,
+  onPng,
   onShare,
   onReset,
 }: ActionsProps) {
@@ -27,6 +29,9 @@ export function Actions({
       </button>
       <button type="button" className="btn" disabled={disabled || busy !== null} onClick={onDownload}>
         {busy === "download" ? "Saving…" : "Download SKILL.md"}
+      </button>
+      <button type="button" className="btn" disabled={disabled || busy !== null} onClick={onPng}>
+        {busy === "png" ? "Printing…" : "Download PNG"}
       </button>
       <button type="button" className="btn" disabled={disabled || busy !== null} onClick={onShare}>
         {busy === "share" ? "Copying…" : "Copy share text"}

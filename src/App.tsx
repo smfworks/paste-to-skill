@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SAMPLES } from "./data/samples";
 import { convertPaste } from "./lib/convert";
 import { copyText, downloadText } from "./lib/clipboard";
+import { cardToPngBlob, downloadBlob, shareTextAndPng } from "./lib/exportImage";
 import { renderSkill } from "./lib/render";
 import { formatCompactStats, formatShareText } from "./lib/share";
 import type { SkillDraft, SkillFlavor } from "./types";
@@ -10,6 +11,7 @@ import { Composer } from "./components/Composer";
 import { Editors } from "./components/Editors";
 import { FlavorToggle } from "./components/FlavorToggle";
 import { Header } from "./components/Header";
+import { SisterStrip } from "./components/SisterStrip";
 import { Preview } from "./components/Preview";
 import { Toast } from "./components/Toast";
 
@@ -19,7 +21,8 @@ export default function App() {
   const [flavor, setFlavor] = useState<SkillFlavor>("hermes");
   const [draft, setDraft] = useState<SkillDraft | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"copy" | "download" | "share" | null>(null);
+  const [busy, setBusy] = useState<"copy" | "download" | "share" | "png" | null>(null);
+  const frameRef = useRef<HTMLElement | null>(null);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -97,14 +100,35 @@ export default function App() {
     }
   }, [draft, markdown, showToast]);
 
+  const downloadPng = useCallback(async () => {
+    if (!draft || !frameRef.current) return;
+    setBusy("png");
+    try {
+      const blob = await cardToPngBlob(frameRef.current);
+      downloadBlob(blob, `${draft.name || "skill"}.png`);
+      showToast("PNG downloaded.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "PNG export failed.");
+    } finally {
+      setBusy(null);
+    }
+  }, [draft, showToast]);
+
   const copyShare = useCallback(async () => {
     if (!draft) return;
     setBusy("share");
     try {
-      await copyText(formatShareText(draft, flavor));
-      showToast("Share text copied.");
+      const text = formatShareText(draft, flavor);
+      if (frameRef.current && typeof navigator.share === "function") {
+        const blob = await cardToPngBlob(frameRef.current);
+        const mode = await shareTextAndPng(text, blob, `${draft.name || "skill"}.png`, draft.name);
+        showToast(mode === "shared" ? "Shared card." : "Share text copied.");
+      } else {
+        await copyText(text);
+        showToast("Share text copied.");
+      }
     } catch {
-      showToast("Could not copy share text.");
+      showToast("Could not share.");
     } finally {
       setBusy(null);
     }
@@ -115,6 +139,7 @@ export default function App() {
       <div className="ambient" aria-hidden="true" />
       <div className="page">
         <Header />
+        <SisterStrip current="paste-to-skill" />
         <div className="layout">
           <div className="stack">
             <Composer
@@ -130,13 +155,14 @@ export default function App() {
           </div>
           <div className="stage">
             <FlavorToggle flavor={flavor} onChange={setFlavor} />
-            <Preview draft={draft} flavor={flavor} markdown={markdown} />
+            <Preview draft={draft} flavor={flavor} markdown={markdown} frameRef={frameRef} />
             {draft ? <p className="stage-stats">{formatCompactStats(draft, flavor)}</p> : null}
             <Actions
               disabled={!draft}
               busy={busy}
               onCopy={() => void copyMarkdown()}
               onDownload={downloadMarkdown}
+              onPng={() => void downloadPng()}
               onShare={() => void copyShare()}
               onReset={reset}
             />

@@ -50,6 +50,64 @@ a:hover {
   text-decoration: underline;
 }
 
+.kit-nav {
+  margin-bottom: 24px;
+}
+
+.sisters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.kit-next {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sisters a,
+.sisters-current {
+  display: grid;
+  gap: 2px;
+  padding: 10px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 20, 40, 0.55);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sisters a:hover {
+  text-decoration: none;
+  border-color: var(--cyan);
+}
+
+.sisters-current {
+  border-color: rgba(234, 88, 12, 0.7);
+  background: rgba(234, 88, 12, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(234, 88, 12, 0.25);
+}
+
+.sisters span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--cyan);
+}
+
+.sisters strong {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+
+.sisters small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .page {
   position: relative;
   min-height: 100vh;
