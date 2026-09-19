@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { SkillDraft, SkillFlavor } from "../types";
 import { highlightSkill } from "../lib/highlight";
 import { flavorLabel } from "../lib/render";
@@ -6,11 +7,12 @@ interface PreviewProps {
   draft: SkillDraft | null;
   flavor: SkillFlavor;
   markdown: string;
+  frameRef?: RefObject<HTMLElement | null>;
 }
 
-export function Preview({ draft, flavor, markdown }: PreviewProps) {
+export function Preview({ draft, flavor, markdown, frameRef }: PreviewProps) {
   return (
-    <section className="preview-card">
+    <section className="preview-card" ref={frameRef as RefObject<HTMLDivElement>}>
       <div className="preview-toolbar">
         <div>
           <p className="eyebrow">SKILL.md</p>
