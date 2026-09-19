@@ -12,6 +12,7 @@ import { Editors } from "./components/Editors";
 import { FlavorToggle } from "./components/FlavorToggle";
 import { Header } from "./components/Header";
 import { SisterStrip } from "./components/SisterStrip";
+import { HandoffBanner } from "./components/HandoffBanner";
 import { Preview } from "./components/Preview";
 import { Toast } from "./components/Toast";
 
@@ -139,7 +140,8 @@ export default function App() {
       <div className="ambient" aria-hidden="true" />
       <div className="page">
         <Header />
-        <SisterStrip current="paste-to-skill" />
+        <SisterStrip current="paste-to-skill" payload={markdown} />
+        <HandoffBanner onPaste={(text) => { setRaw(text); setSampleId(null); }} />
         <div className="layout">
           <div className="stack">
             <Composer

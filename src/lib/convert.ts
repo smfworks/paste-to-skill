@@ -17,18 +17,18 @@ const DEFAULT_REFUSE = [
 
 const TOOL_ALIASES: Array<{ match: RegExp; name: string; purpose: string; bins?: string[]; env?: string[] }> =
   [
-    { match: /\bgmail\b|\binbox\b|\be-?mail\b|\bmail\b/i, name: "email", purpose: "read and draft mail", bins: ["curl"] },
-    { match: /\bcalendar\b|\bgcal\b/i, name: "calendar", purpose: "read holds and events" },
+    { match: /\bgmail\b|\binbox\b|\be-?mail\b/i, name: "email", purpose: "read and draft mail", bins: ["curl"] },
+    { match: /\bgoogle calendar\b|\bgcal\b/i, name: "calendar", purpose: "read holds and events" },
     { match: /\bslack\b/i, name: "slack", purpose: "post to the named channel only after review" },
-    { match: /\bgithub\b|\bgh\b|\bpull request\b|\bpr\b/i, name: "github", purpose: "issues, PRs, and ship notes", bins: ["gh", "git"] },
-    { match: /\bgit\b|\bcommit\b|\bbranch\b/i, name: "git", purpose: "history, tags, and diffs", bins: ["git"] },
+    { match: /\bgithub\b|\bgh\b|\bpull requests?\b/i, name: "github", purpose: "issues, PRs, and ship notes", bins: ["gh", "git"] },
+    { match: /\bgit (?:status|diff|clone|push|log|commit)\b/i, name: "git", purpose: "history, tags, and diffs", bins: ["git"] },
     { match: /\bdocker\b/i, name: "docker", purpose: "images and containers", bins: ["docker"] },
     { match: /\bvercel\b/i, name: "vercel", purpose: "preview and production deploys", bins: ["vercel"], env: ["VERCEL_TOKEN"] },
     { match: /\bstripe\b/i, name: "stripe", purpose: "captured charges and refunds", env: ["STRIPE_API_KEY"] },
-    { match: /\bzendesk\b|\bticket\b/i, name: "tickets", purpose: "customer thread and evidence" },
-    { match: /\blinear\b|\bkanban\b|\bjira\b|\bboard\b/i, name: "board", purpose: "shipped / blocked items" },
-    { match: /\bshell\b|\bterminal\b|\bbash\b/i, name: "shell", purpose: "commands the skill names", bins: ["bash"] },
-    { match: /\bbrowser\b|\bweb\b/i, name: "browser", purpose: "open the named surface" },
+    { match: /\bzendesk\b/i, name: "tickets", purpose: "customer thread and evidence" },
+    { match: /\blinear\b|\bjira\b/i, name: "board", purpose: "shipped / blocked items" },
+    { match: /\bbash\b|\bterminal\b|\bshell command/i, name: "shell", purpose: "commands the skill names", bins: ["bash"] },
+    { match: /\bweb browser\b|\bplaywright\b|\bpuppeteer\b/i, name: "browser", purpose: "open the named surface" },
   ];
 
 const IMPERATIVE =
