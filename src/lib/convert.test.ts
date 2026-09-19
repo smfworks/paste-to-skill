@@ -61,6 +61,20 @@ done when smoke checks pass
     assert.equal(draft.tools.some((tool) => tool.name === "git" || tool.name === "docker"), true);
   });
 
+  it("does not invent tools from loose words like pr, mail, or web", () => {
+    const draft = convertPaste(`# Weekly letter
+
+1. Write the weekly letter about the web
+2. Mail the summary after the PR is ready
+never send without a human
+`);
+    assert.ok(draft);
+    const names = draft.tools.map((tool) => tool.name);
+    assert.equal(names.includes("github"), false);
+    assert.equal(names.includes("email"), false);
+    assert.equal(names.includes("browser"), false);
+  });
+
   it("accepts the JSON intermediate schema", () => {
     const draft = convertPaste(
       JSON.stringify({
