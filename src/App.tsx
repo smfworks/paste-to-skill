@@ -140,8 +140,8 @@ export default function App() {
       <div className="ambient" aria-hidden="true" />
       <div className="page">
         <Header />
-        <SisterStrip current="paste-to-skill" payload={markdown} />
-        <HandoffBanner onPaste={(text) => { setRaw(text); setSampleId(null); }} />
+        <SisterStrip current="paste-to-skill" payload={markdown} kind="skill-md" />
+        <HandoffBanner accept={["skill-md", "plain"]} onPaste={(text) => { setRaw(text); setSampleId(null); }} />
         <div className="layout">
           <div className="stack">
             <Composer

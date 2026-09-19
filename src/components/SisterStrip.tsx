@@ -1,33 +1,58 @@
-import { KIT_NEXT, VIRAL_KIT, type ViralKitId } from "../data/kit";
+import { KIT_NEXT, VIRAL_KIT, type HandoffKind, type ViralKitId } from "../data/kit";
 
 interface SisterStripProps {
   current: ViralKitId;
   payload?: string;
+  kind?: HandoffKind;
 }
 
-async function openSister(demo: string, payload?: string) {
-  const url = new URL(demo);
-  if (payload?.trim()) {
+function isModifiedClick(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  button: number;
+}): boolean {
+  return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+}
+
+function openSister(demo: string, payload: string, kind: HandoffKind | undefined): void {
+  const win = window.open("about:blank", "_blank");
+  if (!win) return;
+  win.opener = null;
+  void (async () => {
+    const url = new URL(demo);
     try {
       await navigator.clipboard.writeText(payload);
       url.searchParams.set("handoff", "1");
+      if (kind) url.searchParams.set("kind", kind);
     } catch {
-      /* still navigate */
+      /* open the demo without a handoff banner */
     }
-  }
-  window.open(url.toString(), "_blank", "noopener,noreferrer");
+    win.location.replace(url.toString());
+  })();
 }
 
-export function SisterStrip({ current, payload }: SisterStripProps) {
+export function SisterStrip({ current, payload, kind }: SisterStripProps) {
   const nextIds = KIT_NEXT[current] ?? [];
   const next = nextIds
     .map((id) => VIRAL_KIT.find((item) => item.id === id))
     .filter((item): item is (typeof VIRAL_KIT)[number] => Boolean(item));
 
-  const onKitClick = (event: { preventDefault: () => void }, demo: string) => {
-    if (!payload?.trim()) return;
+  const onNextClick = (
+    event: {
+      preventDefault: () => void;
+      metaKey: boolean;
+      ctrlKey: boolean;
+      shiftKey: boolean;
+      altKey: boolean;
+      button: number;
+    },
+    demo: string,
+  ) => {
+    if (!payload?.trim() || isModifiedClick(event)) return;
     event.preventDefault();
-    void openSister(demo, payload);
+    openSister(demo, payload, kind);
   };
 
   return (
@@ -45,13 +70,7 @@ export function SisterStrip({ current, payload }: SisterStripProps) {
             );
           }
           return (
-            <a
-              href={item.demo}
-              rel="noreferrer"
-              target="_blank"
-              key={item.id}
-              onClick={(event) => onKitClick(event, item.demo)}
-            >
+            <a href={item.demo} rel="noreferrer" target="_blank" key={item.id}>
               <span>{n}</span>
               <strong>{item.label}</strong>
               <small>{item.blurb}</small>
@@ -69,7 +88,7 @@ export function SisterStrip({ current, payload }: SisterStripProps) {
                 href={item.demo}
                 rel="noreferrer"
                 target="_blank"
-                onClick={(event) => onKitClick(event, item.demo)}
+                onClick={(event) => onNextClick(event, item.demo)}
               >
                 {item.label}
               </a>

@@ -19,6 +19,16 @@ export const VIRAL_KIT = [
 
 export type ViralKitId = (typeof VIRAL_KIT)[number]["id"];
 
+export type HandoffKind =
+  | "skill-md"
+  | "session-json"
+  | "redacted-text"
+  | "eval-json"
+  | "prompt-text"
+  | "json"
+  | "plain";
+
+
 export const KIT_NEXT: Record<ViralKitId, ViralKitId[]> = {
   "paste-to-skill": ["skill-lint", "skill-card"],
   "skill-lint": ["eval-scorecard", "skill-card"],
